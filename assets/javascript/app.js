@@ -20,10 +20,10 @@ $("#add-train-btn").on("click", function () {
 	var destination = $("#destination-input").val().trim();
 	var firstTrain = moment($("#first-train-input").val().trim(), "HH:mm").format("HH:mm");
 	var frequency = moment($("#frequency-input").val().trim(), "mm").format("mm");
-	var currentTime = moment();
-	var difference = moment.utc(moment(currentTime, "HH:mm").diff(moment(firstTrain, "HH:mm"))).format("HH:mm");
-	var remainder = difference % frequency;
-	console.log(remainder);
+	// var currentTime = moment();
+	// var difference = moment.utc(moment(currentTime, "HH:mm").diff(moment(firstTrain, "HH:mm"))).format("HH:mm");
+	// var remainder = difference % frequency;
+	// console.log(remainder);
 	
 //creating local object to store values in
 	var newTrain = {
@@ -31,7 +31,7 @@ $("#add-train-btn").on("click", function () {
 		destination: destination,
 		firstTrain: firstTrain,
 		frequency: frequency,
-		difference: difference
+		//difference: difference
 	};
 
 //upload the train data to firebase
@@ -42,6 +42,8 @@ $("#add-train-btn").on("click", function () {
 	console.log(newTrain.destination);
 	console.log(newTrain.firstTrain);
 	console.log(newTrain.frequency);
+
+	alert("New train added")
 
 //Clear all of the text boxes
 	$("#train-name-input").val("");
@@ -67,15 +69,35 @@ database.ref().on("child_added", function(childSnapshot) {
 	console.log(firstTrain);
 	console.log(frequency);
 
+//get the current time
 	var currentTime = moment();
+//get the difference between current time and first train arrival time
 	var difference = moment.utc(moment(currentTime, "HH:mm").diff(moment(firstTrain, "HH:mm"))).format("HH:mm");
 	console.log(difference);
-	var difference = childSnapshot.val().difference;
-	console.log(difference);
+
+//	var difference = childSnapshot.val().difference;
+//	console.log(difference);
+
+//convert the difference from HH:mm to minutes
 	var toMinutes = moment.duration(difference).asMinutes();
 	console.log(toMinutes);
-	var remainder = toMinutes % frequency;
-	console.log(remainder);
+//to get the minutes since the last train,get the remainder of the difference in minutes divided by the frequency minutes of train arrival
+	var minutesSinceLastTrain = toMinutes % frequency;
+	console.log(minutesSinceLastTrain);
+//to get the minutes until the next train subtract the minutes since the last train from the frequency 
+	var minutesAway = frequency - minutesSinceLastTrain;
+	console.log(minutesAway);
+//get next train time
+	var nextTrain = moment().add(minutesAway, "minutes").format("HH:mm");
+	var nextTrain = moment(nextTrain, "HH:mm").format("HH:mm");
+	//var nextTrain = moment.utc(moment(nextTrain, "HH:mm")).format("HH:mm");
+	console.log("Arrival time " + nextTrain);
+
+
+//add each train's data to the table
+	$("#train-table > tbody").append("<tr><td>" + leavingFrom + "</td><td>"	+ destination + "</td><td>"	
+		+ frequency + "</td><td>" + nextTrain + "</td><td>" + minutesAway + "</td></tr>"); 
+});
 	// var difference = moment.duration().minutes();
 	// console.log(difference);
 	// 
@@ -105,8 +127,5 @@ database.ref().on("child_added", function(childSnapshot) {
 	// //var nextArrival = first train time + frequency(min) + currentTime;
 	// //var currentTime-lastArrival = minutesAway;
 
-	// //add each train's data to the table
-	// $("#train-table > tbody").append("<tr><td>" + leavingFrom + "</td><td>"	+ destination + "</td><td>"	
-	// 	+ frequency + "</td><td>" + nextArrival + "</td><td>" + minutesAway + "</td></tr>"); 
 
-});
+
